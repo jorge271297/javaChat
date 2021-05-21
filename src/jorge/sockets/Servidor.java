@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -56,14 +57,11 @@ class MarcoServidor extends JFrame implements Runnable {
 			
 			PaqueteEnvio paqueteRecibido;
 			
+			ArrayList<String> listaIp = new ArrayList<String>();
+			
 			while (true) {
 				Socket miSocket = miServerSocket.accept();
-				/*----------------------------Detecta online---------------------------------------*/
-				InetAddress localizacion = miSocket.getInetAddress();
-				String IpRemota = localizacion.getHostAddress();
-				System.out.println("Online " + IpRemota);
-				/*----------------------------Detecta online---------------------------------------*/
-				
+								
 				ObjectInputStream paquete_datos = new ObjectInputStream(miSocket.getInputStream());
 				paqueteRecibido = (PaqueteEnvio) paquete_datos.readObject();
 				
@@ -71,19 +69,37 @@ class MarcoServidor extends JFrame implements Runnable {
 				ip = paqueteRecibido.getIp();
 				mensaje = paqueteRecibido.getMensaje();
 				
-				areatexto.append("\n" + nick + ": " + mensaje + " para " + ip);
-				
-				Socket enviaDestinatario = new Socket(ip, 9090);
-				ObjectOutputStream paqueteRenvio = new ObjectOutputStream(enviaDestinatario.getOutputStream());
-				paqueteRenvio.writeObject(paqueteRecibido);
-				
-				paqueteRenvio.close();
-				enviaDestinatario.close();
+				if(!mensaje.equals("OnLine")) {
+					areatexto.append("\n" + nick + ": " + mensaje + " para " + ip);
+					
+					Socket enviaDestinatario = new Socket(ip, 9090);
+					ObjectOutputStream paqueteRenvio = new ObjectOutputStream(enviaDestinatario.getOutputStream());
+					paqueteRenvio.writeObject(paqueteRecibido);
+					
+					paqueteRenvio.close();
+					enviaDestinatario.close();
+					miSocket.close();
+				} else {
+					/*----------------------------Detecta online---------------------------------------*/
+					InetAddress localizacion = miSocket.getInetAddress();
+					String IpRemota = localizacion.getHostAddress();
+					//System.out.println("Online " + IpRemota);
+					listaIp.add(IpRemota);
+					paqueteRecibido.setListaIps(listaIp);
+					for (String z:listaIp) {
+						//System.out.println("Array: " + z);
+						Socket enviaDestinatario = new Socket(z, 9090);
+						ObjectOutputStream paqueteRenvio = new ObjectOutputStream(enviaDestinatario.getOutputStream());
+						paqueteRenvio.writeObject(paqueteRecibido);
+						paqueteRenvio.close();
+						enviaDestinatario.close();
+						miSocket.close();
+					}
+					/*----------------------------Detecta online---------------------------------------*/
+				}
 				/*DataInputStream flujoEntrada = new DataInputStream(miSocket.getInputStream());
 				String mensajeTexto = flujoEntrada.readUTF();
 				areatexto.append("\n" + mensajeTexto);*/
-				
-				miSocket.close();
 			}
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();

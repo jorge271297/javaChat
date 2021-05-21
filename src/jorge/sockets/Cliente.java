@@ -12,6 +12,8 @@ import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -85,9 +87,10 @@ class LaminaMarcoCliente extends JPanel implements Runnable {
 		
 		//se inicia el campo ip y se agrega a la lamina
 		ip = new JComboBox();
-		ip.addItem("Usuatio 1");
+		/*ip.addItem("Usuatio 1");
 		ip.addItem("Usuatio 2");
-		ip.addItem("Usuatio 3");
+		ip.addItem("Usuatio 3");*/
+		//ip.addItem("192.168.1.227");
 		add(ip);
 		
 		//se inicia el texare donde se mostraran los mensajes
@@ -147,7 +150,17 @@ class LaminaMarcoCliente extends JPanel implements Runnable {
 				cliente = servidor_cliente.accept();
 				ObjectInputStream flujoEntrada = new ObjectInputStream(cliente.getInputStream());
 				paqueteRecibido = (PaqueteEnvio) flujoEntrada.readObject();
-				campoChat.append("\n" + paqueteRecibido.getNick() + ": " + paqueteRecibido.getMensaje()); 
+				if(!paqueteRecibido.getMensaje().equals("OnLine")) {
+					campoChat.append("\n" + paqueteRecibido.getNick() + ": " + paqueteRecibido.getMensaje()); 
+				} else {
+					//campoChat.append("\n" + paqueteRecibido.getListaIps());
+					ArrayList <String> IpsMenu = new ArrayList<String>();
+					IpsMenu = paqueteRecibido.getListaIps();
+					ip.removeAllItems();
+					for(String z : IpsMenu) {
+						ip.addItem(z);
+					}
+				}
 			}
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
@@ -159,6 +172,15 @@ class LaminaMarcoCliente extends JPanel implements Runnable {
 class PaqueteEnvio implements Serializable {
 	
 	private String nick, ip, mensaje;
+	private ArrayList<String> listaIps;
+
+	public ArrayList<String> getListaIps() {
+		return listaIps;
+	}
+
+	public void setListaIps(ArrayList<String> listaIps) {
+		this.listaIps = listaIps;
+	}
 
 	public String getNick() {
 		return nick;
